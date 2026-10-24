@@ -13,7 +13,6 @@ import type {
   LinksAdded,
   LinksPick,
   LinksView,
-  Phone,
   Player,
   PlaylistAdded,
   PlaylistPick,
@@ -950,60 +949,6 @@ export class FakeApi implements Api {
 
   async openUpdatePage() {
     await this.call("openUpdatePage");
-  }
-
-  phoneValue: Phone = { on: false, address: "", network: "", devices: [] };
-  phoneNetwork = "192.168.1.0/24"; // the network turning it on finds; "" for none
-  private phoneHandler: ((p: Phone) => void) | null = null;
-
-  async phone() {
-    return structuredClone(this.phoneValue);
-  }
-
-  async setPhone(on: boolean) {
-    await this.call("setPhone", on);
-    if (on && !this.phoneNetwork)
-      throw new Error("this computer isn't on a home network Snag can listen on");
-    this.phoneValue = on
-      ? { ...this.phoneValue, on, network: this.phoneNetwork, address: "http://192.168.1.5:41234" }
-      : { ...this.phoneValue, on, network: "", address: "" };
-    return structuredClone(this.phoneValue);
-  }
-
-  async pairPhone() {
-    await this.call("pairPhone");
-    return {
-      link: "http://192.168.1.5:41234/#pair=code1",
-      path: "M0 0h7v1h-7z",
-      size: 21,
-      until: Date.now() + 10 * 60_000,
-    };
-  }
-
-  async stopPairing() {
-    await this.call("stopPairing");
-  }
-
-  async removePhone(id: string) {
-    await this.call("removePhone", id);
-    this.phoneValue.devices = this.phoneValue.devices.filter((d) => d.id !== id);
-    return structuredClone(this.phoneValue);
-  }
-
-  onPhone(handler: (p: Phone) => void) {
-    this.phoneHandler = handler;
-    return () => (this.phoneHandler = null);
-  }
-
-  pairedPhone(name: string): void {
-    const now = Date.now();
-    this.phoneValue.devices.push({
-      id: `p${this.phoneValue.devices.length + 1}`,
-      name,
-      added: now,
-      seen: now,
-    });
-    this.phoneHandler?.(structuredClone(this.phoneValue));
   }
 
   follow(handlers: Handlers) {

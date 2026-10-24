@@ -3,7 +3,6 @@ import { Events, Window } from "@wailsio/runtime";
 import {
   DownloadsService,
   LinksService,
-  PhoneService,
   PlaylistsService,
   QueuesService,
   SettingsService,
@@ -39,8 +38,6 @@ export type LinksView = app.LinksView;
 export type Link = LinksView["links"][number];
 export type LinksPick = app.LinksPick;
 export type LinksAdded = app.LinksAdded;
-export type Phone = app.Phone;
-export type Pairing = app.Pairing;
 
 export interface Api {
   list(): Promise<Download[]>;
@@ -134,14 +131,6 @@ export interface Api {
   openSubscriptionPage(id: string): Promise<void>;
   unsubscribe(id: string): Promise<void>;
   findSubscription(link: string): Promise<void>;
-
-  // onPhone returns an unsubscribe function.
-  phone(): Promise<Phone>;
-  setPhone(on: boolean): Promise<Phone>;
-  pairPhone(): Promise<Pairing>;
-  stopPairing(): Promise<void>;
-  removePhone(id: string): Promise<Phone>;
-  onPhone(handler: (p: Phone) => void): () => void;
 
   closeWindow(): Promise<void>;
   // Resizes the window so the page shows height pixels.
@@ -244,12 +233,6 @@ export const wailsApi: Api = {
   openSubscriptionPage: (id) => SubscriptionsService.OpenPage(id),
   unsubscribe: (id) => SubscriptionsService.Remove(id),
   findSubscription: (link) => SubscriptionsService.Find(link),
-  phone: () => PhoneService.Status(),
-  setPhone: (on) => PhoneService.Set(on),
-  pairPhone: () => PhoneService.Pair(),
-  stopPairing: () => PhoneService.StopPairing(),
-  removePhone: (id) => PhoneService.Remove(id),
-  onPhone: (handler) => Events.On("phone:changed", (e) => handler(e.data)),
 
   closeWindow: () => Window.Close(),
   fitWindow(height) {

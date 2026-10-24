@@ -65,12 +65,11 @@ func (s *DownloadsService) List() ([]Download, error) {
 
 // Add adds a link: a file, a video page, a stream or a list.
 func (s *DownloadsService) Add(link string) (Added, error) {
-	return s.app.addLink(link, false)
+	return s.app.addLink(link)
 }
 
-// addLink opens a list's window instead of adding it. confirmed skips the Save dialog, as for a
-// link from a phone.
-func (a *App) addLink(link string, confirmed bool) (Added, error) {
+// addLink opens a list's window instead of adding it.
+func (a *App) addLink(link string) (Added, error) {
 	svc, err := a.service()
 	if err != nil {
 		return Added{}, err
@@ -92,7 +91,7 @@ func (a *App) addLink(link string, confirmed bool) (Added, error) {
 			return added, nil
 		}
 	}
-	req := engine.AddRequest{URL: link, Kind: engine.KindHTTP, Confirmed: confirmed}
+	req := engine.AddRequest{URL: link, Kind: engine.KindHTTP}
 	if svc.Prober.IsStream(ctx, link) {
 		// Cheap: the prober has just cached the page.
 		if p, err := svc.ListPlaylist(ctx, playlist.Request{URL: link}); err == nil {

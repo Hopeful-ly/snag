@@ -38,8 +38,6 @@ type App struct {
 	playlists *dialogs
 	links     *dialogs
 	notes     *notifications.NotificationService
-	// phone is nil without Options.PhoneFile.
-	phone *phone
 
 	mu  sync.Mutex
 	svc *service.Service
@@ -51,8 +49,6 @@ type App struct {
 type Options struct {
 	// Background starts the app hidden in the tray.
 	Background bool
-	// PhoneFile stores paired phones; "" disables sending links from a phone.
-	PhoneFile string
 }
 
 // New builds the application around the web UI assets. If Snag is already running, it hands
@@ -80,7 +76,6 @@ func New(assets fs.FS, opts Options) *App {
 			application.NewService(&PlaylistsService{app: a}),
 			application.NewService(&LinksService{app: a}),
 			application.NewService(&SubscriptionsService{app: a}),
-			application.NewService(&PhoneService{app: a}),
 			application.NewService(a.notes),
 		},
 		Assets: application.AssetOptions{
@@ -99,9 +94,6 @@ func New(assets fs.FS, opts Options) *App {
 			ApplicationShouldTerminateAfterLastWindowClosed: false,
 		},
 	})
-	if opts.PhoneFile != "" {
-		a.phone = newPhone(a, opts.PhoneFile, assets)
-	}
 	a.window = newMainWindow(a.wails, !opts.Background)
 	a.tray = newTray(a)
 	a.setUpNotifications()
@@ -126,9 +118,6 @@ func (a *App) Attach(svc *service.Service) {
 	})
 	svc.OnQuit(a.Quit)
 	go a.follow(svc)
-	if a.phone != nil {
-		a.phone.keeper.Start()
-	}
 }
 
 func (a *App) service() (*service.Service, error) {
@@ -170,8 +159,5 @@ func (a *App) show() {
 
 // Quit closes the window and stops the application.
 func (a *App) Quit() {
-	if a.phone != nil {
-		a.phone.keeper.Close()
-	}
 	a.wails.Quit()
 }

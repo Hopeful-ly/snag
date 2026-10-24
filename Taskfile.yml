@@ -192,9 +192,9 @@ tasks:
           exit 0
         fi
         rm -rf dist/extension/signed
-        git archive --format=zip -o dist/extension/source.zip HEAD
+        git archive --format=zip -o dist/source.zip HEAD
         npx -y web-ext@8 sign --channel unlisted --source-dir dist/extension/firefox \
-          --upload-source-code dist/extension/source.zip \
+          --upload-source-code dist/source.zip \
           --artifacts-dir dist/extension/signed --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
         mv dist/extension/signed/*.xpi dist/extension/snag-firefox-{{.RELEASE}}.xpi
 

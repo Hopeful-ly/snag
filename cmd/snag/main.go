@@ -87,7 +87,6 @@ func run(background, atLogin bool) error {
 	// First, so a second instance hands over to the running one before touching anything.
 	ui := app.New(frontend.Assets(), app.Options{
 		Background: background,
-		PhoneFile:  filepath.Join(filepath.Dir(paths.State), "remote.json"),
 	})
 
 	// Re-registering on every start follows the install through updates and moves.

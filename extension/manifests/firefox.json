@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Snag Download Manager",
   "description": "Download videos and files with Snag: a button on videos, quality choices, fast multi-connection downloads. Talks only to the Snag program on this computer.",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "browser_specific_settings": {
     "gecko": {
       "id": "snag@snagdl.com",

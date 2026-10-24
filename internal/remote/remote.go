@@ -1,6 +1,7 @@
 // Package remote lets a paired phone add links and list, pause, resume and remove downloads.
 // Nothing more: it can't read files, change settings, or delete anything from disk. A phone pairs
-// with a one-time code and gets a device token. A paired phone can request an invite code, since
+// with a one-time code and gets a device token. Nothing carries the messages yet: they are for
+// Snag Cloud's relay. A paired phone can request an invite code, since
 // an iPhone home-screen copy of the page has storage separate from Safari's and must pair itself.
 package remote
 
@@ -105,11 +106,9 @@ var (
 	ErrUnknownDevice = errors.New("this phone isn't paired with Snag")
 )
 
-// saved keeps the port stable so phones' addresses keep working, and only hashes of device tokens.
+// saved keeps only hashes of device tokens.
 type saved struct {
-	Port     int      `json:"port,omitempty"`
-	Networks []string `json:"networks,omitempty"`
-	Devices  []device `json:"devices,omitempty"`
+	Devices []device `json:"devices,omitempty"`
 }
 
 type device struct {
@@ -300,36 +299,6 @@ func (r *Remote) Handle(req Request) Response {
 	default:
 		return fail(fmt.Errorf("unknown request %q", req.Op))
 	}
-}
-
-// port returns the saved port, or 0 for none yet.
-func (r *Remote) port() int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.saved.Port
-}
-
-func (r *Remote) setPort(p int) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if r.saved.Port != p {
-		r.saved.Port = p
-		r.save()
-	}
-}
-
-func (r *Remote) networks() []string {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return slices.Clone(r.saved.Networks)
-}
-
-// SetNetworks sets the CIDRs Snag listens in.
-func (r *Remote) SetNetworks(cidrs []string) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.saved.Networks = slices.Clone(cidrs)
-	r.save()
 }
 
 // save writes the file; r.mu is held.

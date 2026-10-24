@@ -1,7 +1,6 @@
 <script lang="ts">
   import Icon from "./Icon.svelte";
   import IconButton from "./IconButton.svelte";
-  import PhoneSettings from "./PhoneSettings.svelte";
   import SettingRow from "./SettingRow.svelte";
   import Stepper from "./Stepper.svelte";
   import Toggle from "./Toggle.svelte";
@@ -204,8 +203,6 @@
             />
           </SettingRow>
         </div>
-
-        <PhoneSettings />
 
         <h2>About</h2>
         <div class="card about">
