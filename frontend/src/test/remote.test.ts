@@ -40,7 +40,8 @@ class FakePhoneApi implements PhoneApi {
   async send(token: string, req: Request) {
     if (!this.paired || token !== "token1")
       throw new Unpaired("This phone isn't paired with Snag any more.");
-    if (req.op !== "list") this.calls.push([req.op, req.link ?? req.id].filter(Boolean).join(" "));
+    if (req.op !== "list")
+      this.calls.push([req.op, req.link ?? req.id, req.choice].filter((x) => x != null).join(" "));
     switch (req.op) {
       case "list":
         return { items: structuredClone(this.items) };
@@ -49,6 +50,22 @@ class FakePhoneApi implements PhoneApi {
         this.items.unshift(item);
         return { item };
       }
+      case "look":
+        if (req.link?.includes("talk"))
+          return {
+            look: {
+              title: "A talk",
+              site: "video.example",
+              duration: 600,
+              choices: [
+                { label: "1080p", detail: "MP4", size: 300 * MB },
+                { label: "Audio MP3", detail: "", size: 0 },
+              ],
+            },
+          };
+        if (req.link?.includes("list"))
+          return { look: { title: "A season", list: true, count: 8 } };
+        return { look: {} };
       case "invite":
         return { code: "invite1" };
       default:
@@ -112,6 +129,35 @@ describe("the phone page", () => {
     expect(api.calls).toContain("add https://example.com/clip");
     expect(box).toHaveValue("");
     expect(await screen.findByRole("listitem", { name: "clip.mp4" })).toHaveTextContent("Waiting");
+  });
+
+  it("asks which quality, then downloads at it", async () => {
+    localStorage.setItem("snag-token", "token1");
+    const { api, user } = show();
+    await user.type(await screen.findByLabelText("Link"), "https://video.example/talk");
+    await user.click(screen.getByRole("button", { name: "Send to Snag" }));
+    const found = await screen.findByRole("region", { name: "What the link offers" });
+    expect(found).toHaveTextContent("A talk");
+    expect(found).toHaveTextContent("video.example · 10 min");
+    expect(within(found).getByRole("radio", { name: /1080p/ })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await user.click(within(found).getByRole("radio", { name: /Audio MP3/ }));
+    await user.click(within(found).getByRole("button", { name: "Download" }));
+    await waitFor(() => expect(api.calls).toContain("add https://video.example/talk 1"));
+    expect(screen.queryByRole("region", { name: "What the link offers" })).not.toBeInTheDocument();
+  });
+
+  it("sends a list to the computer to pick from", async () => {
+    localStorage.setItem("snag-token", "token1");
+    const { api, user } = show();
+    await user.type(await screen.findByLabelText("Link"), "https://video.example/list");
+    await user.click(screen.getByRole("button", { name: "Send to Snag" }));
+    const found = await screen.findByRole("region", { name: "What the link offers" });
+    expect(found).toHaveTextContent("8 in the list");
+    await user.click(within(found).getByRole("button", { name: "Open on the computer" }));
+    await waitFor(() => expect(api.calls).toContain("add https://video.example/list"));
   });
 
   it("pauses, resumes and clears", async () => {

@@ -11,14 +11,33 @@ export interface Item {
 }
 
 export interface Request {
-  op: "add" | "list" | "pause" | "resume" | "forget" | "invite";
+  op: "look" | "add" | "list" | "pause" | "resume" | "forget" | "invite";
   link?: string;
+  choice?: number; // for add: an index into Look's choices; none for Snag's default
   id?: string;
+}
+
+// Look is what a link offers. No choices: a file, added as it is. list: a playlist, a channel or
+// an album, which Snag opens on the computer to pick from.
+export interface Look {
+  title?: string;
+  site?: string;
+  duration?: number; // seconds
+  choices?: Option[];
+  list?: boolean;
+  count?: number;
+}
+
+export interface Option {
+  label: string; // "1080p", "Audio MP3"
+  detail: string; // "MP4 · HDR"
+  size: number; // estimated; 0 when unknown
 }
 
 export interface Response {
   items?: Item[];
   item?: Item;
+  look?: Look;
   code?: string; // for invite: a one-time code to pair another copy of the page
   error?: string;
 }

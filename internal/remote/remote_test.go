@@ -30,8 +30,17 @@ func (f *fakeDownloads) record(call string) {
 	f.calls = append(f.calls, call)
 }
 
-func (f *fakeDownloads) Add(link string) (Item, error) {
-	f.record("add " + link)
+func (f *fakeDownloads) Look(link string) (Look, error) {
+	f.record("look " + link)
+	return Look{Title: "A talk", Choices: []Option{{Label: "1080p"}, {Label: "Audio MP3"}}}, nil
+}
+
+func (f *fakeDownloads) Add(link string, choice int) (Item, error) {
+	if choice < 0 {
+		f.record("add " + link)
+	} else {
+		f.record(fmt.Sprint("add ", link, " at ", choice))
+	}
 	item := Item{ID: fmt.Sprint("d", len(f.items)+1), Name: "file.mp4", Status: "downloading"}
 	f.mu.Lock()
 	f.items = append(f.items, item)
@@ -190,7 +199,20 @@ func TestHandle(t *testing.T) {
 			t.Errorf("added %q", bad)
 		}
 	}
-	if res := r.Handle(Request{Op: "list"}); len(res.Items) != 1 {
+	if res := r.Handle(Request{Op: "look", Link: "https://example.com/talk"}); res.Look == nil || len(res.Look.Choices) != 2 {
+		t.Fatalf("look: %+v", res)
+	}
+	if res := r.Handle(Request{Op: "look", Link: "file:///etc/passwd"}); res.Error == "" {
+		t.Error("looked at a file:// link")
+	}
+	one, minusOne := 1, -1
+	if res := r.Handle(Request{Op: "add", Link: "https://example.com/talk", Choice: &one}); res.Error != "" {
+		t.Fatalf("add at a quality: %+v", res)
+	}
+	if res := r.Handle(Request{Op: "add", Link: "https://example.com/talk", Choice: &minusOne}); res.Error == "" {
+		t.Error("added at quality -1")
+	}
+	if res := r.Handle(Request{Op: "list"}); len(res.Items) != 2 {
 		t.Fatalf("list: %+v", res)
 	}
 	for _, op := range []string{"pause", "resume", "forget"} {
@@ -209,7 +231,8 @@ func TestHandle(t *testing.T) {
 			t.Errorf("%q worked", op)
 		}
 	}
-	want := "add https://example.com/v.mp4,pause d1,resume d1,forget d1,forget missing"
+	want := "add https://example.com/v.mp4,look https://example.com/talk,add https://example.com/talk at 1," +
+		"pause d1,resume d1,forget d1,forget missing"
 	if got := strings.Join(d.calls, ","); got != want {
 		t.Errorf("calls %s, want %s", got, want)
 	}

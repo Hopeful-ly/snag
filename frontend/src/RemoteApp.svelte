@@ -2,12 +2,13 @@
   import { onMount, untrack } from "svelte";
   import IconButton from "./lib/components/IconButton.svelte";
   import ProgressBar from "./lib/components/ProgressBar.svelte";
-  import { size } from "./lib/format";
+  import { duration, size } from "./lib/format";
   import {
     deviceName,
     platformOf,
     Unpaired,
     type Item,
+    type Look,
     type PhoneApi,
     type Platform,
     type Request,
@@ -36,6 +37,8 @@
   let items = $state<Item[] | null>(null);
   let link = $state("");
   let sending = $state(false);
+  // What the sent link offers, while a quality is picked: the link, what Snag found, the pick.
+  let found = $state<{ link: string; look: Look; choice: number } | null>(null);
   let pairing = $state(false);
   let busy = $state<Record<string, boolean>>({});
   let message = $state<{ text: string; tone: "good" | "bad" } | null>(null);
@@ -90,14 +93,30 @@
     }
   }
 
-  async function add(e: SubmitEvent) {
+  // look asks Snag what the link offers. A file is added at once; a video waits for a quality.
+  async function look(e: SubmitEvent) {
     e.preventDefault();
     const sent = link.trim();
     if (!sent || sending) return;
     sending = true;
+    message = null;
     try {
-      const { item } = await send({ op: "add", link: sent });
+      const { look } = await send({ op: "look", link: sent });
+      if (look?.choices?.length || look?.list) found = { link: sent, look, choice: 0 };
+      else await add(sent);
+    } catch (error) {
+      if (!(error instanceof Unpaired)) say(messageOf(error), "bad");
+    } finally {
+      sending = false;
+    }
+  }
+
+  async function add(sent: string, choice?: number) {
+    sending = true;
+    try {
+      const { item } = await send({ op: "add", link: sent, choice });
       link = "";
+      found = null;
       say(item ? `Downloading ${item.name}` : "Sent to Snag");
       await refresh();
     } catch (error) {
@@ -105,6 +124,12 @@
     } finally {
       sending = false;
     }
+  }
+
+  function about(l: Look): string {
+    const parts = [l.site, l.duration ? duration(l.duration) : ""];
+    if (l.list) parts.push(l.count ? `${l.count} in the list` : "a list");
+    return parts.filter(Boolean).join(" · ");
   }
 
   async function act(op: "pause" | "resume" | "forget", id: string) {
@@ -200,7 +225,7 @@
       <b>Pair a phone</b>, and scan the QR code with this phone's camera.
     </p>
   {:else}
-    <form onsubmit={add}>
+    <form onsubmit={look}>
       <input
         type="url"
         inputmode="url"
@@ -210,11 +235,56 @@
         autocapitalize="off"
         spellcheck="false"
         bind:value={link}
+        oninput={() => (found = null)}
       />
-      <button type="submit" class="send" disabled={sending || !link.trim()}>
-        {sending ? "Sending…" : "Send to Snag"}
-      </button>
+      {#if !found}
+        <button type="submit" class="send" disabled={sending || !link.trim()}>
+          {sending ? "Looking…" : "Send to Snag"}
+        </button>
+      {/if}
     </form>
+
+    {#if found}
+      {@const f = found}
+      <section class="found" aria-label="What the link offers">
+        <div class="title">{f.look.title || f.link}</div>
+        {#if about(f.look)}<div class="meta">{about(f.look)}</div>{/if}
+        {#if f.look.list}
+          <p class="hint">Snag opens lists on the computer, to pick what to download from them.</p>
+        {:else}
+          <div class="choices" role="radiogroup" aria-label="Quality">
+            {#each f.look.choices ?? [] as c, i (i)}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={f.choice === i}
+                class="choice"
+                class:on={f.choice === i}
+                onclick={() => (f.choice = i)}
+              >
+                <span class="label">{c.label}</span>
+                <span class="detail"
+                  >{[c.detail, c.size ? `~${size(c.size)}` : ""].filter(Boolean).join(" · ")}</span
+                >
+              </button>
+            {/each}
+          </div>
+        {/if}
+        <div class="actions">
+          <button type="button" class="cancel" disabled={sending} onclick={() => (found = null)}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="send"
+            disabled={sending}
+            onclick={() => add(f.link, f.look.list ? undefined : f.choice)}
+          >
+            {sending ? "Sending…" : f.look.list ? "Open on the computer" : "Download"}
+          </button>
+        </div>
+      </section>
+    {/if}
 
     <h2>Downloads</h2>
     {#if items === null}
@@ -398,6 +468,81 @@
     color: white;
     font: inherit;
     font-weight: 600;
+  }
+
+  .found {
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .found .title {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .found .meta {
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 12px 0;
+  }
+
+  .choice {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--field);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+  }
+
+  .choice.on {
+    border-color: var(--accent-strong);
+    background: var(--accent-soft);
+  }
+
+  .choice .label {
+    font-weight: 600;
+  }
+
+  .choice .detail {
+    color: var(--text-dim);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .actions .send {
+    flex: 1;
+  }
+
+  .cancel {
+    height: 48px;
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--field);
+    color: var(--text);
+    font: inherit;
   }
 
   .send:disabled,

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -12,8 +13,12 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 	"rsc.io/qr"
 
+	"github.com/Roham1299/snag/internal/applemusic"
 	"github.com/Roham1299/snag/internal/engine"
+	"github.com/Roham1299/snag/internal/playlist"
+	"github.com/Roham1299/snag/internal/probe"
 	"github.com/Roham1299/snag/internal/remote"
+	"github.com/Roham1299/snag/internal/spotify"
 	"github.com/Roham1299/snag/packaging/icons"
 )
 
@@ -208,23 +213,79 @@ type phoneDownloads struct {
 }
 
 var (
-	errOpenedList = errors.New("that's a list: Snag opened it on the computer, to pick what to download")
-	errNotDone    = errors.New("only finished downloads can be cleared from a phone")
+	errOpenedList   = errors.New("that's a list: Snag opened it on the computer, to pick what to download")
+	errNotDone      = errors.New("only finished downloads can be cleared from a phone")
+	errNoSuchChoice = errors.New("that quality isn't offered any more: send the link again")
 )
 
-// Add adds a link from a phone straight to the download folder and notifies the user.
-func (p phoneDownloads) Add(link string) (remote.Item, error) {
-	added, err := p.app.addLink(link, true)
+// Look says what a link from a phone offers, as the extension's card does: a video's qualities,
+// a list to pick from on the computer, or nothing for a file.
+func (p phoneDownloads) Look(link string) (remote.Look, error) {
+	svc, err := p.app.service()
+	if err != nil {
+		return remote.Look{}, err
+	}
+	_, fromSpotify := spotify.Parse(link)
+	_, fromApple := applemusic.Parse(link)
+	if fromSpotify || fromApple || playlist.LooksLikeFeed(link) {
+		return remote.Look{List: true}, nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), addTimeout)
+	defer cancel()
+	r := svc.Prober.Probe(ctx, probe.Request{URL: link})
+	switch {
+	case !r.Supported && r.Reason != "":
+		return remote.Look{}, errors.New(r.Reason)
+	case !r.Supported:
+		return remote.Look{}, nil
+	case len(r.Choices) == 0 && r.Playlist != nil:
+		return remote.Look{Title: r.Playlist.Title, Site: r.Site, List: true, Count: r.Playlist.Count}, nil
+	}
+	look := remote.Look{Title: r.Title, Site: r.Site, Duration: r.Duration}
+	for _, c := range r.Choices {
+		look.Choices = append(look.Choices, remote.Option{Label: c.Label, Detail: c.Detail, Size: c.Size})
+	}
+	return look, nil
+}
+
+// Add adds a link from a phone straight to the download folder, at one of Look's choices or
+// Snag's default (choice -1), and notifies the user.
+func (p phoneDownloads) Add(link string, choice int) (remote.Item, error) {
+	if choice < 0 {
+		added, err := p.app.addLink(link, true)
+		if err != nil {
+			return remote.Item{}, err
+		}
+		if added.Playlist != "" {
+			return remote.Item{}, errOpenedList
+		}
+		if !added.Duplicate {
+			p.app.notifyFromPhone(added.Download)
+		}
+		return itemOf(added.Download), nil
+	}
+	svc, err := p.app.service()
 	if err != nil {
 		return remote.Item{}, err
 	}
-	if added.Playlist != "" {
-		return remote.Item{}, errOpenedList
+	ctx, cancel := context.WithTimeout(context.Background(), addTimeout)
+	defer cancel()
+	r := svc.Prober.Probe(ctx, probe.Request{URL: link}) // cached since Look
+	if !r.Supported || choice >= len(r.Choices) {
+		return remote.Item{}, errNoSuchChoice
 	}
-	if !added.Duplicate {
-		p.app.notifyFromPhone(added.Download)
+	c := r.Choices[choice]
+	d, duplicate, err := svc.Engine.Add(engine.AddRequest{
+		URL: link, Page: link, Title: r.Title, Label: c.Label, Kind: engine.KindStream,
+		Format: c.Format, Sort: c.Sort, Audio: c.Audio, Confirmed: true,
+	})
+	if err != nil {
+		return remote.Item{}, err
 	}
-	return itemOf(added.Download), nil
+	if !duplicate {
+		p.app.notifyFromPhone(viewOf(d))
+	}
+	return itemOf(viewOf(d)), nil
 }
 
 func (a *App) notifyFromPhone(d Download) {

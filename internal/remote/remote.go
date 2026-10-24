@@ -24,8 +24,11 @@ import (
 
 // Downloads is what a phone may do with Snag's downloads.
 type Downloads interface {
+	// Look says what a link offers: its title and the qualities to choose from.
+	Look(link string) (Look, error)
 	// Add downloads straight to the download folder: no Save window waits on the computer.
-	Add(link string) (Item, error)
+	// choice is an index into Look's Choices, or -1 for Snag's default.
+	Add(link string, choice int) (Item, error)
 	List() []Item
 	Pause(id string) error
 	Resume(id string) error
@@ -45,15 +48,35 @@ type Item struct {
 
 // Request is one message from a phone.
 type Request struct {
-	Op   string `json:"op"`             // "add", "list", "pause", "resume", "forget" or "invite"
-	Link string `json:"link,omitempty"` // for add
-	ID   string `json:"id,omitempty"`   // for pause, resume and forget
+	Op     string `json:"op"`               // "look", "add", "list", "pause", "resume", "forget" or "invite"
+	Link   string `json:"link,omitempty"`   // for look and add
+	Choice *int   `json:"choice,omitempty"` // for add: an index into Look's Choices; nil for the default
+	ID     string `json:"id,omitempty"`     // for pause, resume and forget
+}
+
+// Look is what a link offers. No Choices means a file, added as it is; List means a playlist,
+// a channel or an album, which Snag opens on the computer to pick from.
+type Look struct {
+	Title    string   `json:"title,omitempty"`
+	Site     string   `json:"site,omitempty"`
+	Duration float64  `json:"duration,omitempty"` // seconds
+	Choices  []Option `json:"choices,omitempty"`
+	List     bool     `json:"list,omitempty"`
+	Count    int      `json:"count,omitempty"` // the list's entries, when known
+}
+
+// Option is one quality to download a link at.
+type Option struct {
+	Label  string `json:"label"`  // "1080p", "Audio MP3"
+	Detail string `json:"detail"` // "MP4 · HDR"
+	Size   int64  `json:"size"`   // estimated; 0 when unknown
 }
 
 // Response is Snag's answer.
 type Response struct {
 	Items []Item `json:"items,omitempty"` // for list
 	Item  *Item  `json:"item,omitempty"`  // for add
+	Look  *Look  `json:"look,omitempty"`  // for look
 	Code  string `json:"code,omitempty"`  // for invite
 	Error string `json:"error,omitempty"`
 }
@@ -235,12 +258,26 @@ func (r *Remote) Device(token string) (Device, error) {
 func (r *Remote) Handle(req Request) Response {
 	fail := func(err error) Response { return Response{Error: err.Error()} }
 	switch req.Op {
-	case "add":
+	case "look", "add":
 		u, err := url.Parse(req.Link)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 			return fail(errors.New("send a link starting with http:// or https://"))
 		}
-		item, err := r.downloads.Add(u.String())
+		if req.Op == "look" {
+			look, err := r.downloads.Look(u.String())
+			if err != nil {
+				return fail(err)
+			}
+			return Response{Look: &look}
+		}
+		choice := -1
+		if req.Choice != nil {
+			if *req.Choice < 0 {
+				return fail(errors.New("which quality?"))
+			}
+			choice = *req.Choice
+		}
+		item, err := r.downloads.Add(u.String(), choice)
 		if err != nil {
 			return fail(err)
 		}
