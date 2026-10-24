@@ -93,6 +93,8 @@ website: the app carries the browser extension and walks you through adding it t
 **From a release:** the Windows installer, the Linux package (`.deb`, `.rpm`, Arch) or the macOS
 disk image. Start Snag once; it sets itself up for your browsers, and its "Connect your browser"
 screen shows how to add the extension (Developer mode, "Load unpacked", pick the folder it shows).
+For Firefox, open [snagdl.com/firefox](https://snagdl.com/firefox) in Firefox: the add-on is signed
+by Mozilla and updates itself.
 
 **From source (Linux):** with the tools in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md),
 

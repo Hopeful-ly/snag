@@ -116,7 +116,17 @@
     </li>
   </ol>
 
-  <p class="firefox">Firefox: the Snag add-on for Firefox is coming soon.</p>
+  <div class="firefox-addon">
+    <p class="firefox">
+      Firefox: add Snag's add-on from <b>snagdl.com/firefox</b>, opened in Firefox. It's signed by
+      Mozilla and updates itself.
+    </p>
+    <IconButton
+      icon="link"
+      label="Open in the browser"
+      onclick={() => snag.request("", () => snag.api.openFirefoxAddon())}
+    />
+  </div>
   {#if snag.startAtLogin?.on}
     <p class="firefox">
       Snag starts with your computer, in the tray, so it's ready when the browser needs it. Turn
@@ -214,6 +224,22 @@
     margin: 16px 0 0;
     color: var(--text-dim);
     font-size: var(--text-sm);
+  }
+
+  .firefox-addon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .firefox-addon .firefox {
+    flex: 1;
+    margin: 0;
+  }
+
+  .firefox-addon,
+  .firefox-addon + .firefox {
+    margin-top: 16px;
   }
 
   .status {

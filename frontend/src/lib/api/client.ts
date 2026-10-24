@@ -88,6 +88,7 @@ export interface Api {
   version(): Promise<string>;
   author(): Promise<{ name: string; page: string }>;
   openAuthorPage(): Promise<void>;
+  openFirefoxAddon(): Promise<void>;
   update(): Promise<{ version: string } | null>;
   openUpdatePage(): Promise<void>;
   setup(): Promise<Setup>;
@@ -211,6 +212,7 @@ export const wailsApi: Api = {
   version: () => SystemService.Version(),
   author: () => SystemService.Author(),
   openAuthorPage: () => SystemService.OpenAuthorPage(),
+  openFirefoxAddon: () => SystemService.OpenFirefoxAddon(),
   update: () => SystemService.Update(),
   openUpdatePage: () => SystemService.OpenUpdatePage(),
   queues: () => QueuesService.List(),

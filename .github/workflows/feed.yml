@@ -43,6 +43,7 @@ jobs:
           else
             echo "::notice::No release yet: the feed names only the yt-dlp to use."
           fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
           go run ./cmd/sign-feed "${release[@]}" -ytdlp "$YTDLP" -o feed.json
           base64 -d <<< "$(jq -r .feed feed.json)" | jq .
 
@@ -63,3 +64,38 @@ jobs:
           fi
           aws s3 cp --no-progress --content-type application/json --cache-control max-age=300 \
             feed.json "s3://$BUCKET/feed.json"
+
+      # Firefox offers to install an add-on from a link only when it's served as
+      # application/x-xpinstall, which GitHub's release downloads aren't. snag.xpi is always the
+      # latest; updates.json is where installed copies look for newer ones (their update_url).
+      - name: Publish the Firefox add-on
+        if: env.VERSION != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          AWS_DEFAULT_REGION: auto
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          BUCKET: ${{ vars.FEED_BUCKET }}
+          FEED_URL: ${{ vars.SNAG_FEED_URL }}
+        run: |
+          xpi="snag-firefox-$VERSION.xpi"
+          if ! gh release download "v$VERSION" --pattern "$xpi" --dir firefox; then
+            echo "::notice::v$VERSION has no signed Firefox add-on."
+            exit 0
+          fi
+          base="${FEED_URL%/*}/firefox"
+          id=$(jq -r .browser_specific_settings.gecko.id extension/manifests/firefox.json)
+          hash=$(sha256sum "firefox/$xpi" | cut -d' ' -f1)
+          jq -n --arg id "$id" --arg v "$VERSION" --arg link "$base/$xpi" --arg hash "sha256:$hash" \
+            '{addons: {($id): {updates: [{version: $v, update_link: $link, update_hash: $hash}]}}}' \
+            > firefox/updates.json
+          cat firefox/updates.json
+          aws s3 cp --no-progress --content-type application/x-xpinstall \
+            "firefox/$xpi" "s3://$BUCKET/firefox/$xpi"
+          aws s3 cp --no-progress --content-type application/x-xpinstall --cache-control max-age=300 \
+            "firefox/$xpi" "s3://$BUCKET/firefox/snag.xpi"
+          aws s3 cp --no-progress --content-type application/json --cache-control max-age=300 \
+            firefox/updates.json "s3://$BUCKET/firefox/updates.json"

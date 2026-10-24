@@ -41,6 +41,13 @@ describe("Connect your browser", () => {
     expect(await screen.findByText("Copied the folder's path")).toBeInTheDocument();
   });
 
+  it("opens the page for the Firefox add-on", async () => {
+    const { api, user } = await renderApp(firstRun());
+    expect(within(sheet()).getByText(/signed by Mozilla/)).toBeInTheDocument();
+    await user.click(button("Open in the browser", sheet()));
+    await waitFor(() => expect(api.calls).toContain("openFirefoxAddon"));
+  });
+
   it("opens each browser found on its extensions page", async () => {
     const { api, user } = await renderApp(firstRun());
     await user.click(await within(sheet()).findByRole("button", { name: "Vivaldi" }));

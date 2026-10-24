@@ -43,13 +43,16 @@ Firefox only installs signed extensions. Mozilla signs add-ons that aren't in it
 1. Make an account at addons.mozilla.org and create API keys (Tools → Manage API Keys).
 2. Add them as the secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`. Tagged releases then come with a
    signed `snag-firefox-VERSION.xpi`.
-3. **Decide the extension's id first.** It is `snag@localhost` for now, in
-   `extension/manifests/firefox.json` and `internal/nativehost/nativehost.go` (a test checks they
-   agree). The first signed upload ties the add-on to its id for good, so change it to one on your
-   own domain (such as `snag@yourdomain.com`) before then.
-4. For updates, set the variable `SNAG_FIREFOX_UPDATE_URL` to an address on the website that serves
-   Mozilla's update manifest (a JSON file listing the signed `.xpi` versions). Firefox checks it
-   once a day.
+3. The extension's id is `snag@snagdl.com`, in `extension/manifests/firefox.json` and
+   `internal/nativehost/nativehost.go` (a test checks they agree). Mozilla ties the add-on to it
+   for good: never change it.
+4. The variable `SNAG_FIREFOX_UPDATE_URL` (`https://updates.snagdl.com/firefox/updates.json`) is
+   built into the add-on as where Firefox looks for newer versions, once a day.
+5. The **Feed** workflow publishes each release's signed add-on to the feed's bucket:
+   `firefox/snag-firefox-VERSION.xpi`, `firefox/snag.xpi` (always the latest) and
+   `firefox/updates.json`. Firefox only offers to install an add-on served as
+   `application/x-xpinstall`, which GitHub's downloads aren't. `snagdl.com/firefox` redirects to
+   `snag.xpi`, and the app's "Connect your browser" screen opens it.
 
 ### Windows code signing
 

@@ -938,6 +938,10 @@ export class FakeApi implements Api {
     await this.call("openAuthorPage");
   }
 
+  async openFirefoxAddon() {
+    await this.call("openFirefoxAddon");
+  }
+
   updateValue: { version: string } | null = null;
 
   async update() {

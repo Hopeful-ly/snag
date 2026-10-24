@@ -17,7 +17,7 @@ const Name = "snag.host"
 // The extension's IDs: Chromium's derives from the packing key, Firefox's is set in its manifest.
 const (
 	chromiumOrigin = "chrome-extension://dbkengnfcibdmedgidblleimphdigbli/"
-	firefoxID      = "snag@localhost"
+	firefoxID      = "snag@snagdl.com"
 )
 
 // Family is a browser family; each reads its own manifest format.

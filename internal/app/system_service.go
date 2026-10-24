@@ -33,6 +33,8 @@ func (s *SystemService) CopyText(text string) error {
 const (
 	authorName = "Roham1299"
 	authorPage = "https://github.com/Roham1299"
+	// The website sends this to the latest signed Firefox add-on, which Firefox offers to install.
+	firefoxAddon = "https://snagdl.com/firefox"
 )
 
 // Author is who made Snag, with their page.
@@ -50,4 +52,9 @@ func (s *SystemService) Author() Author {
 // addresses.
 func (s *SystemService) OpenAuthorPage() error {
 	return s.app.wails.Browser.OpenURL(authorPage)
+}
+
+// OpenFirefoxAddon opens the page that installs Snag's Firefox add-on.
+func (s *SystemService) OpenFirefoxAddon() error {
+	return s.app.wails.Browser.OpenURL(firefoxAddon)
 }
