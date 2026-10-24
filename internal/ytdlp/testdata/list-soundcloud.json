@@ -1,0 +1,30 @@
+{
+ "_type": "playlist",
+ "id": "18",
+ "title": "Soulhack",
+ "extractor_key": "SoundcloudSet",
+ "webpage_url": "https://soundcloud.com/forss/sets/soulhack",
+ "original_url": "https://soundcloud.com/forss/sets/soulhack",
+ "playlist_count": 3,
+ "uploader": "Forss",
+ "entries": [
+  {
+   "_type": "url_transparent",
+   "id": "290",
+   "ie_key": "Soundcloud",
+   "url": "https://soundcloud.com/forss/city-ports"
+  },
+  {
+   "_type": "url_transparent",
+   "id": "291",
+   "ie_key": "Soundcloud",
+   "url": "https://soundcloud.com/forss/soulhack"
+  },
+  {
+   "_type": "url_transparent",
+   "id": "292",
+   "ie_key": "Soundcloud",
+   "url": "https://soundcloud.com/forss/funk-for-nerds"
+  }
+ ]
+}

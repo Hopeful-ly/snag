@@ -1,0 +1,6 @@
+# Build output
+bin/
+.task/
+frontend/bindings/
+dist/
+cmd/snag/*.syso

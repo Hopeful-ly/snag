@@ -1,0 +1,121 @@
+{
+ "data": {
+  "albumUnion": {
+   "__typename": "Album",
+   "name": "Random Access Memories",
+   "uri": "spotify:album:4m2880jivSbbyEGAKfITCa",
+   "date": {
+    "isoString": "2013-05-20T00:00:00Z",
+    "precision": "DAY"
+   },
+   "coverArt": {
+    "sources": [
+     {
+      "height": 300,
+      "url": "https://i.scdn.co/image/ab67616d00001e029b9b36b0e22870b9f542d937",
+      "width": 300
+     },
+     {
+      "height": 64,
+      "url": "https://i.scdn.co/image/ab67616d000048519b9b36b0e22870b9f542d937",
+      "width": 64
+     },
+     {
+      "height": 640,
+      "url": "https://i.scdn.co/image/ab67616d0000b2739b9b36b0e22870b9f542d937",
+      "width": 640
+     }
+    ]
+   },
+   "artists": {
+    "items": [
+     {
+      "profile": {
+       "name": "Daft Punk"
+      }
+     }
+    ]
+   },
+   "tracksV2": {
+    "totalCount": 13,
+    "items": [
+     {
+      "track": {
+       "uri": "spotify:track:7oaEjLP2dTJLJsITbAxTOz",
+       "name": "Touch (feat. Paul Williams)",
+       "artists": {
+        "items": [
+         {
+          "profile": {
+           "name": "Daft Punk"
+          }
+         },
+         {
+          "profile": {
+           "name": "Paul Williams"
+          }
+         }
+        ]
+       },
+       "discNumber": 1,
+       "trackNumber": 7,
+       "duration": {
+        "totalMilliseconds": 498960
+       }
+      }
+     },
+     {
+      "track": {
+       "uri": "spotify:track:69kOkLUCkxIZYexIgSG8rq",
+       "name": "Get Lucky (feat. Pharrell Williams and Nile Rodgers)",
+       "artists": {
+        "items": [
+         {
+          "profile": {
+           "name": "Daft Punk"
+          }
+         },
+         {
+          "profile": {
+           "name": "Pharrell Williams"
+          }
+         },
+         {
+          "profile": {
+           "name": "Nile Rodgers"
+          }
+         }
+        ]
+       },
+       "discNumber": 1,
+       "trackNumber": 8,
+       "duration": {
+        "totalMilliseconds": 369626
+       }
+      }
+     },
+     {
+      "track": {
+       "uri": "spotify:track:0k1xMUwn9sb7bZiqdT9ygx",
+       "name": "Beyond",
+       "artists": {
+        "items": [
+         {
+          "profile": {
+           "name": "Daft Punk"
+          }
+         }
+        ]
+       },
+       "discNumber": 1,
+       "trackNumber": 9,
+       "duration": {
+        "totalMilliseconds": 290240
+       }
+      }
+     }
+    ]
+   }
+  }
+ }
+}

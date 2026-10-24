@@ -1,0 +1,144 @@
+{
+ "data": {
+  "me": {
+   "library": {
+    "tracks": {
+     "__typename": "UserLibraryTrackPage",
+     "totalCount": 2,
+     "items": [
+      {
+       "__typename": "UserLibraryTrackResponse",
+       "addedAt": {
+        "isoString": "2026-01-02T03:04:05Z"
+       },
+       "track": {
+        "_uri": "spotify:track:1MTQHCpraD4S8g5PAFKzoj",
+        "data": {
+         "__typename": "Track",
+         "name": "Behind Blue Eyes",
+         "artists": {
+          "items": [
+           {
+            "profile": {
+             "name": "Limp Bizkit"
+            }
+           }
+          ]
+         },
+         "albumOfTrack": {
+          "name": "Results May Vary",
+          "uri": "spotify:album:3oUoQ0UH7Rv06x1kpSjS36",
+          "artists": {
+           "items": [
+            {
+             "profile": {
+              "name": "Limp Bizkit"
+             }
+            }
+           ]
+          },
+          "coverArt": {
+           "sources": [
+            {
+             "height": 300,
+             "url": "https://i.scdn.co/image/ab67616d00001e0244971d48c21dbd132f2d506e",
+             "width": 300
+            },
+            {
+             "height": 64,
+             "url": "https://i.scdn.co/image/ab67616d0000485144971d48c21dbd132f2d506e",
+             "width": 64
+            },
+            {
+             "height": 640,
+             "url": "https://i.scdn.co/image/ab67616d0000b27344971d48c21dbd132f2d506e",
+             "width": 640
+            }
+           ]
+          },
+          "date": {
+           "isoString": "2003-01-01T00:00:00Z",
+           "precision": "DAY"
+          }
+         },
+         "discNumber": 1,
+         "trackNumber": 16,
+         "duration": {
+          "totalMilliseconds": 269973
+         }
+        }
+       }
+      },
+      {
+       "__typename": "UserLibraryTrackResponse",
+       "addedAt": {
+        "isoString": "2026-01-02T03:04:05Z"
+       },
+       "track": {
+        "_uri": "spotify:track:0KQx6HOpJueiSkztcS0r7D",
+        "data": {
+         "__typename": "Track",
+         "name": "Fallin'",
+         "artists": {
+          "items": [
+           {
+            "profile": {
+             "name": "Alicia Keys"
+            }
+           }
+          ]
+         },
+         "albumOfTrack": {
+          "name": "Songs In A Minor",
+          "uri": "spotify:album:5qUlPoDmNxCSzqVx81RDLJ",
+          "artists": {
+           "items": [
+            {
+             "profile": {
+              "name": "Alicia Keys"
+             }
+            }
+           ]
+          },
+          "coverArt": {
+           "sources": [
+            {
+             "height": 300,
+             "url": "https://i.scdn.co/image/ab67616d00001e026d684b553a40e4a11e1db96d",
+             "width": 300
+            },
+            {
+             "height": 64,
+             "url": "https://i.scdn.co/image/ab67616d000048516d684b553a40e4a11e1db96d",
+             "width": 64
+            },
+            {
+             "height": 640,
+             "url": "https://i.scdn.co/image/ab67616d0000b2736d684b553a40e4a11e1db96d",
+             "width": 640
+            }
+           ]
+          },
+          "date": {
+           "isoString": "2001-06-05T00:00:00Z",
+           "precision": "DAY"
+          }
+         },
+         "discNumber": 1,
+         "trackNumber": 4,
+         "duration": {
+          "totalMilliseconds": 210200
+         }
+        }
+       }
+      }
+     ],
+     "pagingInfo": {
+      "limit": 50,
+      "offset": 0
+     }
+    }
+   }
+  }
+ }
+}

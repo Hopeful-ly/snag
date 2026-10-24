@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Snag Download Manager",
+  "description": "Download videos and files with Snag: a button on videos, quality choices, fast multi-connection downloads. Talks only to the Snag program on this computer.",
+  "version": "0.7.1",
+  "key": "__KEY__",
+  "minimum_chrome_version": "111",
+  "permissions": [
+    "nativeMessaging",
+    "webRequest",
+    "storage",
+    "contextMenus",
+    "downloads",
+    "cookies",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "all_frames": true,
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_title": "Snag",
+    "default_icon": {
+      "16": "icon-16.png",
+      "32": "icon-32.png",
+      "48": "icon-48.png"
+    }
+  },
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  }
+}

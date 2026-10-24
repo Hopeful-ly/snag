@@ -1,0 +1,72 @@
+name: CI
+
+# Linux checks every change, Windows joins for pull requests, all three on manual runs.
+# macOS is built and signed by release.yml.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push makes a run still going for the same branch pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: App (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: >-
+          ${{ fromJSON(github.event_name == 'workflow_dispatch'
+          && '["ubuntu-24.04", "windows-latest", "macos-latest"]'
+          || github.event_name == 'pull_request' && '["ubuntu-24.04", "windows-latest"]'
+          || '["ubuntu-24.04"]') }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup
+
+      - name: Go modules are tidy
+        if: runner.os == 'Linux'
+        run: go mod tidy && git diff --exit-code go.mod go.sum
+
+      - run: task tools
+
+      - name: Install ffmpeg, and a browser for the extension test
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y ffmpeg
+          # Branded Chrome no longer loads extensions from the command line; Chrome for Testing does.
+          path=$(npx -y @puppeteer/browsers install chrome@stable --path "$RUNNER_TEMP/browsers" | tail -1 | cut -d' ' -f2)
+          echo "SNAG_BROWSER=$path" >> "$GITHUB_ENV"
+          echo "SNAG_REQUIRE_E2E=1" >> "$GITHUB_ENV"
+      - run: task bindings
+
+      - name: Lint Go
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.14.0
+          args: ./cmd/... ./internal/... ./frontend ./extension
+
+      - name: Lint the frontend and the extension
+        run: |
+          npm --prefix frontend run lint
+          npm --prefix frontend run check
+          npm --prefix extension run lint
+          npm --prefix extension run check
+
+      - run: task test
+      - run: task build
+
+      - name: Upload the app
+        uses: actions/upload-artifact@v4
+        with:
+          name: snag-${{ runner.os }}
+          path: bin/
+          retention-days: 14

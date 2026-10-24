@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <link rel="self" href="http://www.youtube.com/feeds/videos.xml?channel_id=UCK8sQmJBp8GCxrOtXWBpyEA"/>
+ <id>yt:channel:K8sQmJBp8GCxrOtXWBpyEA</id>
+ <yt:channelId>K8sQmJBp8GCxrOtXWBpyEA</yt:channelId>
+ <title>Google</title>
+ <author><name>Google</name><uri>https://www.youtube.com/channel/UCK8sQmJBp8GCxrOtXWBpyEA</uri></author>
+ <entry>
+  <id>yt:video:eSGqW_VMMXQ</id>
+  <yt:videoId>eSGqW_VMMXQ</yt:videoId>
+  <title>Why the future of healthcare is prevention</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=eSGqW_VMMXQ"/>
+  <published>2026-10-15T16:00:01+00:00</published>
+  <updated>2026-10-16T02:11:40+00:00</updated>
+ </entry>
+ <entry>
+  <id>yt:video:ktdbUIZKeSE</id>
+  <title>Making sure AI chips don’t overheat in space</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=ktdbUIZKeSE"/>
+  <published>2026-10-13T16:00:00+00:00</published>
+ </entry>
+</feed>

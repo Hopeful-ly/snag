@@ -1,0 +1,39 @@
+version: "2"
+
+run:
+  relative-path-mode: gomod
+
+linters:
+  default: standard
+  exclusions:
+    # Unchecked Close and Remove on paths that already return another error.
+    presets:
+      - std-error-handling
+    paths:
+      - frontend/node_modules
+      - extension/node_modules
+  enable:
+    - bodyclose
+    - errorlint
+    - gocritic
+    - misspell
+    - revive
+    - unconvert
+    - unparam
+  settings:
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
+        - name: var-naming
+        - name: error-strings
+        - name: receiver-naming
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    paths:
+      - frontend/node_modules
+      - extension/node_modules

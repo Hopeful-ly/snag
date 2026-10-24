@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>The   Harbour Hour</title>
+    <link>https://harbour.example.org/</link>
+    <itunes:author>Mira Okafor</itunes:author>
+    <itunes:image href="https://harbour.example.org/cover.jpg"/>
+    <item>
+      <title>Episode 12: Night Ferries</title>
+      <guid isPermaLink="false">harbour-12</guid>
+      <pubDate>Tue, 14 Oct 2026 06:00:00 +0000</pubDate>
+      <enclosure url="https://cdn.example.org/harbour/12.mp3?src=rss" length="40213422" type="audio/mpeg"/>
+      <itunes:duration>1:02:03</itunes:duration>
+      <itunes:episode>12</itunes:episode>
+      <itunes:season>2</itunes:season>
+    </item>
+    <item>
+      <title><![CDATA[Episode 11: Low Tide & Signal Fires]]></title>
+      <pubDate>Tue, 7 Oct 2026 06:00:00 GMT</pubDate>
+      <enclosure url="/harbour/11.m4a" type="audio/x-m4a"/>
+      <itunes:duration>2723</itunes:duration>
+      <itunes:image href="https://harbour.example.org/11.jpg"/>
+    </item>
+    <item>
+      <title>A note without a file</title>
+      <link>https://harbour.example.org/notes/1</link>
+    </item>
+  </channel>
+</rss>

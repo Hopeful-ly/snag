@@ -1,0 +1,162 @@
+{
+ "data": {
+  "playlistV2": {
+   "__typename": "Playlist",
+   "name": "All Out 2000s",
+   "uri": "spotify:playlist:37i9dQZF1DX4o1oenSJRJd",
+   "images": {
+    "items": [
+     {
+      "sources": [
+       {
+        "height": null,
+        "url": "https://i.scdn.co/image/ab67706f00000002043bfef44142136749fc2917",
+        "width": null
+       }
+      ]
+     }
+    ]
+   },
+   "ownerV2": {
+    "data": {
+     "name": "Spotify"
+    }
+   },
+   "content": {
+    "totalCount": 150,
+    "items": [
+     {
+      "itemV2": {
+       "__typename": "TrackResponseWrapper",
+       "data": {
+        "__typename": "Track",
+        "uri": "spotify:track:1MTQHCpraD4S8g5PAFKzoj",
+        "name": "Behind Blue Eyes",
+        "artists": {
+         "items": [
+          {
+           "profile": {
+            "name": "Limp Bizkit"
+           }
+          }
+         ]
+        },
+        "albumOfTrack": {
+         "name": "Results May Vary",
+         "uri": "spotify:album:3oUoQ0UH7Rv06x1kpSjS36",
+         "artists": {
+          "items": [
+           {
+            "profile": {
+             "name": "Limp Bizkit"
+            }
+           }
+          ]
+         },
+         "coverArt": {
+          "sources": [
+           {
+            "height": 300,
+            "url": "https://i.scdn.co/image/ab67616d00001e0244971d48c21dbd132f2d506e",
+            "width": 300
+           },
+           {
+            "height": 64,
+            "url": "https://i.scdn.co/image/ab67616d0000485144971d48c21dbd132f2d506e",
+            "width": 64
+           },
+           {
+            "height": 640,
+            "url": "https://i.scdn.co/image/ab67616d0000b27344971d48c21dbd132f2d506e",
+            "width": 640
+           }
+          ]
+         },
+         "date": {
+          "isoString": "2003-01-01T00:00:00Z",
+          "precision": "DAY"
+         }
+        },
+        "discNumber": 1,
+        "trackNumber": 16,
+        "trackDuration": {
+         "totalMilliseconds": 269973
+        }
+       }
+      }
+     },
+     {
+      "itemV2": {
+       "__typename": "TrackResponseWrapper",
+       "data": {
+        "__typename": "Track",
+        "uri": "spotify:track:0KQx6HOpJueiSkztcS0r7D",
+        "name": "Fallin'",
+        "artists": {
+         "items": [
+          {
+           "profile": {
+            "name": "Alicia Keys"
+           }
+          }
+         ]
+        },
+        "albumOfTrack": {
+         "name": "Songs In A Minor",
+         "uri": "spotify:album:5qUlPoDmNxCSzqVx81RDLJ",
+         "artists": {
+          "items": [
+           {
+            "profile": {
+             "name": "Alicia Keys"
+            }
+           }
+          ]
+         },
+         "coverArt": {
+          "sources": [
+           {
+            "height": 300,
+            "url": "https://i.scdn.co/image/ab67616d00001e026d684b553a40e4a11e1db96d",
+            "width": 300
+           },
+           {
+            "height": 64,
+            "url": "https://i.scdn.co/image/ab67616d000048516d684b553a40e4a11e1db96d",
+            "width": 64
+           },
+           {
+            "height": 640,
+            "url": "https://i.scdn.co/image/ab67616d0000b2736d684b553a40e4a11e1db96d",
+            "width": 640
+           }
+          ]
+         },
+         "date": {
+          "isoString": "2001-06-05T00:00:00Z",
+          "precision": "DAY"
+         }
+        },
+        "discNumber": 1,
+        "trackNumber": 4,
+        "trackDuration": {
+         "totalMilliseconds": 210200
+        }
+       }
+      }
+     },
+     {
+      "itemV2": {
+       "__typename": "EpisodeResponseWrapper",
+       "data": {
+        "__typename": "Episode",
+        "uri": "spotify:episode:x",
+        "name": "A podcast"
+       }
+      }
+     }
+    ]
+   }
+  }
+ }
+}

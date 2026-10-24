@@ -1,0 +1,1 @@
+Vite copies this into dist/ on every build, so the folder frontend/assets.go embeds always exists.

@@ -1,0 +1,212 @@
+version: "3"
+
+vars:
+  BIN: bin/snag{{exeExt}}
+  HOST_BIN: bin/snag-host{{exeExt}}
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo dev
+  LDFLAGS: -X github.com/Roham1299/snag/internal/version.Version={{.VERSION}}
+  # Without this, Windows opens a console window next to the app.
+  WINDOWS_LDFLAGS: -H windowsgui
+  # Not ./...: Go would also pick up Go files that npm packages ship in frontend/node_modules.
+  GO_PACKAGES: ./cmd/... ./internal/... ./frontend ./extension
+  # Releases are numbered by their tag (v1.2.0); untagged packages are 0.0.0.
+  RELEASE:
+    sh: t=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true); echo "${t:-v0.0.0}" | sed 's/^v//'
+  # Where releases look for Snag's feed ($SNAG_FEED_URL); without it they never look.
+  FEED_URL:
+    sh: echo "$SNAG_FEED_URL"
+  RELEASE_LDFLAGS: >-
+    -s -w -X github.com/Roham1299/snag/internal/version.Version={{.RELEASE}}
+    -X github.com/Roham1299/snag/internal/version.Packaged=true
+    -X github.com/Roham1299/snag/internal/feed.URL={{.FEED_URL}}
+
+tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true
+
+  setup:
+    desc: Install the frontend's and the extension's packages, and the Go modules
+    cmds:
+      - npm --prefix frontend ci
+      - npm --prefix extension ci
+      - go mod download
+
+  tools:
+    desc: Download the pinned yt-dlp into bin/tools (the tests and `task dev` use it)
+    cmds:
+      - go run ./cmd/fetch-tools bin/tools
+
+  bindings:
+    desc: Generate the TypeScript bindings for the Go services
+    sources: ["internal/app/**/*.go"]
+    generates: ["frontend/bindings/**/*"]
+    cmds:
+      - wails3 generate bindings -ts -silent -d frontend/bindings ./cmd/snag
+
+  dev:
+    desc: Run the app with a live-reloading UI (restart it for Go changes)
+    deps: [bindings, extension:build]
+    cmds:
+      - task: dev:run
+
+  dev:run:
+    internal: true
+    deps: [dev:ui, dev:app]
+
+  dev:ui:
+    internal: true
+    cmds:
+      - npm --prefix frontend run dev
+
+  dev:app:
+    internal: true
+    env:
+      FRONTEND_DEVSERVER_URL: http://localhost:9245
+      SNAG_TOOLS: "{{.ROOT_DIR}}/bin/tools"
+    cmds:
+      - go run ./cmd/snag
+
+  frontend:build:
+    desc: Build the web UI into frontend/dist
+    deps: [bindings]
+    cmds:
+      - npm --prefix frontend run build
+
+  extension:build:
+    desc: Build the browser extension into extension/build (the app carries it)
+    sources: ["extension/src/**/*", "extension/build.mjs", "extension/package-lock.json"]
+    generates: ["extension/build/*.js"]
+    cmds:
+      - npm --prefix extension run build
+
+  build:
+    desc: Build a release binary into bin/
+    deps: [frontend:build, extension:build]
+    cmds:
+      - go build -tags production -trimpath -ldflags "-s -w {{.LDFLAGS}} {{if eq OS "windows"}}{{.WINDOWS_LDFLAGS}}{{end}}" -o {{.BIN}} ./cmd/snag
+      - go build -trimpath -ldflags "-s -w" -o {{.HOST_BIN}} ./cmd/snag-host
+
+  install:local:
+    desc: Install this build for your own use on Linux (~/.local/lib/snag), and point the browsers at it
+    platforms: [linux]
+    deps: [build, tools]
+    vars:
+      DIR: "{{.HOME}}/.local/lib/snag"
+    cmds:
+      # install replaces the files rather than writing into them, so a running Snag isn't disturbed.
+      - install -D -m755 -t "{{.DIR}}" bin/snag bin/snag-host
+      - install -D -m755 -t "{{.DIR}}/tools" bin/tools/yt-dlp
+      - install -D -m644 packaging/icons/snag.svg "{{.DIR}}/snag.svg"
+      - install -D -m644 packaging/icons/snag.svg "{{.HOME}}/.local/share/icons/hicolor/scalable/apps/snag.svg"
+      - install -D -m644 packaging/icons/snag.svg "{{.HOME}}/.local/share/icons/hicolor/scalable/apps/app.snag.desktop.svg"
+      - install -D -m644 packaging/icons/snag-256.png "{{.HOME}}/.local/share/icons/hicolor/256x256/apps/snag.png"
+      - install -D -m644 packaging/icons/snag-256.png "{{.HOME}}/.local/share/icons/hicolor/256x256/apps/app.snag.desktop.png"
+      - install -D -m644 packaging/linux/snag.desktop "{{.HOME}}/.local/share/applications/snag.desktop"
+      # The desktop entry runs `snag`; a home install needs it linked in ~/.local/bin or the
+      # launcher treats the entry as invalid.
+      - mkdir -p "{{.HOME}}/.local/bin"
+      - ln -sfn "{{.DIR}}/snag" "{{.HOME}}/.local/bin/snag"
+      - '"{{.DIR}}/snag" --register-browsers'
+
+  build:windows:
+    desc: Cross-compile a Windows release binary (bin/snag.exe) from any OS
+    deps: [frontend:build, extension:build]
+    env:
+      GOOS: windows
+      GOARCH: amd64
+      CGO_ENABLED: "0"
+    cmds:
+      - go build -tags production -trimpath -ldflags "-s -w {{.LDFLAGS}} {{.WINDOWS_LDFLAGS}}" -o bin/snag.exe ./cmd/snag
+      - go build -trimpath -ldflags "-s -w" -o bin/snag-host.exe ./cmd/snag-host
+
+  test:
+    desc: Run the Go, frontend and extension tests (stream tests need `task tools` first)
+    deps: [extension:build]
+    env:
+      SNAG_TOOLS: "{{.ROOT_DIR}}/bin/tools"
+    cmds:
+      - go test {{.GO_PACKAGES}}
+      - npm --prefix frontend test
+      - npm --prefix extension test
+
+  lint:
+    desc: Lint and type-check the Go code, the frontend and the extension
+    deps: [bindings]
+    cmds:
+      - golangci-lint run {{.GO_PACKAGES}}
+      - npm --prefix frontend run lint
+      - npm --prefix frontend run check
+      - npm --prefix extension run lint
+      - npm --prefix extension run check
+
+  fmt:
+    desc: Format the Go code and the frontend
+    cmds:
+      - gofmt -w cmd internal frontend/assets.go
+      - npm --prefix frontend run format
+      - npm --prefix extension run format
+
+  package:windows:
+    desc: Make the Windows installer (cross-built; needs makensis), signed when signing is set up
+    deps: [frontend:build, extension:build]
+    cmds:
+      - rm -rf dist/windows && mkdir -p dist/windows/Snag
+      - >-
+        wails3 generate syso -arch amd64 -icon packaging/icons/snag.ico
+        -manifest packaging/windows/snag.exe.manifest -out cmd/snag/rsrc_windows_amd64.syso
+      - >-
+        GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -tags production -trimpath
+        -ldflags "{{.RELEASE_LDFLAGS}} {{.WINDOWS_LDFLAGS}}" -o dist/windows/Snag/snag.exe ./cmd/snag
+      - GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o dist/windows/Snag/snag-host.exe ./cmd/snag-host
+      - sh packaging/windows/sign.sh dist/windows/Snag/snag.exe dist/windows/Snag/snag-host.exe
+      - go run ./cmd/fetch-tools -os windows -arch amd64 dist/windows/Snag/tools
+      - >-
+        makensis -V2 -DVERSION={{.RELEASE}} -DSOURCE=../../dist/windows/Snag
+        -DOUTFILE=../../dist/Snag-{{.RELEASE}}-windows-amd64-setup.exe packaging/windows/snag.nsi
+      - sh packaging/windows/sign.sh dist/Snag-{{.RELEASE}}-windows-amd64-setup.exe
+
+  package:linux:
+    desc: Make the Linux packages (deb, rpm, Arch; needs nfpm)
+    deps: [frontend:build, extension:build]
+    cmds:
+      - rm -rf dist/linux && mkdir -p dist/linux/tools
+      - go build -tags production -trimpath -ldflags "{{.RELEASE_LDFLAGS}}" -o dist/linux/snag ./cmd/snag
+      - go build -trimpath -ldflags "-s -w" -o dist/linux/snag-host ./cmd/snag-host
+      - go run ./cmd/fetch-tools dist/linux/tools
+      - for: [deb, rpm, archlinux]
+        cmd: VERSION={{.RELEASE}} ARCH=amd64 nfpm package -f packaging/linux/nfpm.yaml -p {{.ITEM}} -t dist/
+
+  package:extension:
+    deps: [extension:build]
+    desc: >-
+      Pack the browser extension for the website; with AMO_JWT_ISSUER and AMO_JWT_SECRET set,
+      Mozilla signs the Firefox one (unlisted). SNAG_FIREFOX_UPDATE_URL is where it looks for updates.
+    cmds:
+      - go run ./cmd/pack-extension -version {{.RELEASE}} -update-url "$SNAG_FIREFOX_UPDATE_URL" dist/extension
+      - |
+        if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
+          echo "No AMO keys: the Firefox extension stays unsigned, and Firefox won't install it."
+          exit 0
+        fi
+        rm -rf dist/extension/signed
+        npx -y web-ext@8 sign --channel unlisted --source-dir dist/extension/firefox \
+          --artifacts-dir dist/extension/signed --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
+        mv dist/extension/signed/*.xpi dist/extension/snag-firefox-{{.RELEASE}}.xpi
+
+  package:macos:
+    desc: Make Snag.app and its disk image (on a Mac)
+    platforms: [darwin]
+    deps: [frontend:build, extension:build]
+    cmds:
+      - rm -rf dist/darwin-arm64 dist/darwin-amd64 dist/tools
+      - for: [arm64, amd64]
+        cmd: >-
+          CGO_ENABLED=1 GOARCH={{.ITEM}} go build -tags production -trimpath
+          -ldflags "{{.RELEASE_LDFLAGS}}" -o dist/darwin-{{.ITEM}}/snag ./cmd/snag
+          && CGO_ENABLED=0 GOARCH={{.ITEM}} go build -trimpath -ldflags "-s -w"
+          -o dist/darwin-{{.ITEM}}/snag-host ./cmd/snag-host
+      - go run ./cmd/fetch-tools -os darwin -arch arm64 dist/tools
+      - sh packaging/macos/make-app.sh {{.RELEASE}} dist

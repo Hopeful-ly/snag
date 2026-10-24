@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Snag
+GenericName=Download Manager
+Comment=Downloads, and videos from your browser
+Exec=snag
+Icon=snag
+Terminal=false
+Categories=Network;FileTransfer;
+Keywords=download;video;manager;
+StartupWMClass=app.snag.desktop
