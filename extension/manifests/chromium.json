@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Snag Download Manager",
   "description": "Download videos and files with Snag: a button on videos, quality choices, fast multi-connection downloads. Talks only to the Snag program on this computer.",
-  "version": "0.7.1",
+  "version": "0.11.0",
   "key": "__KEY__",
   "minimum_chrome_version": "111",
   "permissions": [

@@ -58,8 +58,14 @@ to choose from, and a clean, modern interface.
   Settings).
 - Every action shows it is happening; nothing freezes.
 
+**From your phone**
+- Turn on Settings → Phone and scan the QR code: your phone gets a page to send links to Snag and
+  follow, pause and resume downloads, over your home network. Nothing to install, no account; it
+  can go on the home screen.
+
 **Private by design.** Snag runs entirely on your computer. The extension talks only to the Snag
-app on the same machine. Once a day the app reads a small file on Snag's website, signed by
+app on the same machine, and the phone page only to Snag over your home network, once you turn
+it on. Once a day the app reads a small file on Snag's website, signed by
 Snag, to learn of a new release and which yt-dlp to use; it sends nothing about you or your
 downloads.
 
