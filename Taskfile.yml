@@ -197,6 +197,7 @@ tasks:
           --upload-source-code dist/source.zip \
           --artifacts-dir dist/extension/signed --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
         mv dist/extension/signed/*.xpi dist/extension/snag-firefox-{{.RELEASE}}.xpi
+        rm dist/extension/snag-firefox-{{.RELEASE}}-unsigned.xpi
 
   package:macos:
     desc: Make Snag.app and its disk image (on a Mac)
