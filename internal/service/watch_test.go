@@ -66,7 +66,7 @@ func startServiceWith(t *testing.T, programs tools.Paths) *Service {
 		Paths: platform.Paths{
 			Config: filepath.Join(dir, "settings.json"), State: filepath.Join(dir, "list.json"),
 			Work: filepath.Join(dir, "work"), Downloads: filepath.Join(dir, "downloads"),
-			Socket: testSocket(t, dir),
+			Socket: testSocket(t),
 		},
 		Tools:  programs,
 		Logger: slog.New(slog.DiscardHandler),
@@ -244,10 +244,16 @@ func TestAStreamPlaysWhileItDownloads(t *testing.T) {
 	}
 }
 
-// testSocket is where a test's app listens: a named pipe on Windows, where sockets aren't files.
-func testSocket(t *testing.T, dir string) string {
+// testSocket is where a test's app listens: a named pipe on Windows, where sockets aren't files,
+// else a short path, as macOS limits socket paths to 104 bytes and its temp folders are long.
+func testSocket(t *testing.T) string {
 	if runtime.GOOS == "windows" {
 		return fmt.Sprintf(`\\.\pipe\snag-test-%d-%s`, os.Getpid(), strings.ReplaceAll(t.Name(), "/", "-"))
 	}
+	dir, err := os.MkdirTemp("", "snag")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
 	return filepath.Join(dir, "app.sock")
 }
