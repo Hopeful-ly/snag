@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -305,9 +306,10 @@ func TestADeletedQueuesDownloadsRunInMain(t *testing.T) {
 func TestAnOldListJoinsMainOldestFirst(t *testing.T) {
 	te := newTestEngine(t, Settings{MaxActive: 1})
 	te.Shutdown(t.Context())
+	dir, _ := json.Marshal(te.dir) // a Windows path's backslashes need escaping
 	old := `[
-		{"id": "new", "url": "https://example.com/new", "kind": "http", "status": "queued", "directory": "` + te.dir + `", "created": "2026-10-02T00:00:00Z", "work": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
-		{"id": "old", "url": "https://example.com/old", "kind": "http", "status": "queued", "directory": "` + te.dir + `", "created": "2026-10-01T00:00:00Z", "work": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+		{"id": "new", "url": "https://example.com/new", "kind": "http", "status": "queued", "directory": ` + string(dir) + `, "created": "2026-10-02T00:00:00Z", "work": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+		{"id": "old", "url": "https://example.com/old", "kind": "http", "status": "queued", "directory": ` + string(dir) + `, "created": "2026-10-01T00:00:00Z", "work": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
 	]`
 	path := filepath.Join(filepath.Dir(te.workRoot), "state", "downloads.json")
 	if err := os.WriteFile(path, []byte(old), 0o600); err != nil {

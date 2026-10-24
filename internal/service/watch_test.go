@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -64,7 +66,7 @@ func startServiceWith(t *testing.T, programs tools.Paths) *Service {
 		Paths: platform.Paths{
 			Config: filepath.Join(dir, "settings.json"), State: filepath.Join(dir, "list.json"),
 			Work: filepath.Join(dir, "work"), Downloads: filepath.Join(dir, "downloads"),
-			Socket: filepath.Join(dir, "app.sock"),
+			Socket: testSocket(t, dir),
 		},
 		Tools:  programs,
 		Logger: slog.New(slog.DiscardHandler),
@@ -240,4 +242,12 @@ func TestAStreamPlaysWhileItDownloads(t *testing.T) {
 			}
 		})
 	}
+}
+
+// testSocket is where a test's app listens: a named pipe on Windows, where sockets aren't files.
+func testSocket(t *testing.T, dir string) string {
+	if runtime.GOOS == "windows" {
+		return fmt.Sprintf(`\\.\pipe\snag-test-%d-%s`, os.Getpid(), strings.ReplaceAll(t.Name(), "/", "-"))
+	}
+	return filepath.Join(dir, "app.sock")
 }
