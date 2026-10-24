@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -34,9 +35,11 @@ func fetch(dir string, p tools.Platform) error {
 		return err
 	}
 	fmt.Println(path)
-	if err := tools.FetchFFmpeg(ctx, dir, p); err != nil {
-		fmt.Println("no FFmpeg:", err)
+	if err := tools.FetchFFmpeg(ctx, dir, p); errors.Is(err, tools.ErrNoFFmpegBuild) {
+		fmt.Println("no FFmpeg to bring for", p, "(the system's is used)")
 		return nil
+	} else if err != nil {
+		return err
 	}
 	fmt.Println("ffmpeg and ffprobe in", dir)
 	return nil

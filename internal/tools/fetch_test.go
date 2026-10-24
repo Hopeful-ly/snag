@@ -47,7 +47,7 @@ func TestEveryShippedPlatformHasItsTools(t *testing.T) {
 			t.Errorf("%s lacks a yt-dlp build", p)
 		}
 	}
-	if ffmpegAssets["windows/amd64"] == "" {
+	if ffmpegAssets["windows/amd64"].sha256 == "" {
 		t.Error("Windows lacks an FFmpeg build")
 	}
 }
