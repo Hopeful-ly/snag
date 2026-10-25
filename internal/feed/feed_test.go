@@ -66,14 +66,58 @@ func TestOpen(t *testing.T) {
 	}
 
 	for name, bad := range map[string]Feed{
-		"no date":            {Snag: release("1.2.0")},
-		"yt-dlp option":      {Issued: day1, YtDLP: "--exec=rm"},
-		"not a version":      {Issued: day1, Snag: release("1.2")},
-		"plain http page":    {Issued: day1, Snag: &Release{Version: "1.2.0", Page: "http://example.com"}},
-		"page with a scheme": {Issued: day1, Snag: &Release{Version: "1.2.0", Page: "file:///etc/passwd"}},
+		"no date":                    {Snag: release("1.2.0")},
+		"yt-dlp option":              {Issued: day1, YtDLP: "--exec=rm"},
+		"not a version":              {Issued: day1, Snag: release("1.2")},
+		"plain http page":            {Issued: day1, Snag: &Release{Version: "1.2.0", Page: "http://example.com"}},
+		"page with a scheme":         {Issued: day1, Snag: &Release{Version: "1.2.0", Page: "file:///etc/passwd"}},
+		"plain http installer":       {Issued: day1, Snag: withFile(File{URL: "http://example.com/s.deb", SHA256: sum})},
+		"installer without a sum":    {Issued: day1, Snag: withFile(File{URL: "https://example.com/s.deb"})},
+		"installer with a short sum": {Issued: day1, Snag: withFile(File{URL: "https://example.com/s.deb", SHA256: sum[:40]})},
 	} {
 		if _, err := Open(seal(t, bad, priv), pub); err == nil {
 			t.Errorf("%s: took it", name)
+		}
+	}
+}
+
+const sum = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+
+func withFile(f File) *Release {
+	r := release("1.2.0")
+	r.Files = map[string]File{"deb-amd64": f}
+	return r
+}
+
+func TestOpenKeepsInstallers(t *testing.T) {
+	pub, priv := newKey(t)
+	want := File{URL: "https://example.com/snag_1.2.0_amd64.deb", SHA256: sum}
+	f, err := Open(seal(t, Feed{Issued: day1, Snag: withFile(want)}, priv), pub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := f.Snag.Files["deb-amd64"]; got != want {
+		t.Fatalf("installer %+v, want %+v", got, want)
+	}
+}
+
+func TestFileKind(t *testing.T) {
+	for name, want := range map[string]string{
+		"Snag-1.2.0-windows-amd64-setup.exe": "windows-amd64",
+		"Snag-1.2.0-windows-arm64-setup.exe": "windows-arm64",
+		"Snag-1.2.0-macos.dmg":               "macos",
+		"snag_1.2.0_amd64.deb":               "deb-amd64",
+		"snag_1.2.0_arm64.deb":               "deb-arm64",
+		"snag-1.2.0-1.x86_64.rpm":            "rpm-amd64",
+		"snag-1.2.0-1.aarch64.rpm":           "rpm-arm64",
+		"snag-1.2.0-1-x86_64.pkg.tar.zst":    "arch-amd64",
+		"snag-1.2.0-1-aarch64.pkg.tar.zst":   "arch-arm64",
+		"snag-firefox-1.2.0.xpi":             "",
+		"snag-extension-1.2.0.zip":           "",
+		"SHA256SUMS":                         "",
+	} {
+		if got := FileKind(name); got != want {
+			t.Errorf("FileKind(%q) = %q, want %q", name, got, want)
 		}
 	}
 }

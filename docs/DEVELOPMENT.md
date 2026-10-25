@@ -38,6 +38,7 @@ internal/checksum/   checksums as sites publish them, and checking files against
 internal/ytdlp/      yt-dlp's command line, output lines and JSON
 internal/tools/      finding yt-dlp and ffmpeg (and fetching the pinned yt-dlp)
 internal/feed/       Snag's signed feed: the latest release, and which yt-dlp to use
+internal/update/     downloading a newer release's installer, checking it and installing it
 internal/remote/     a paired phone's messages and pairing, for Snag Cloud's relay (not wired in yet)
 internal/cookies/    browser cookies as a Cookie header or yt-dlp's cookie file
 internal/naming/     file names: safe names, the server's name, real names vs tokens in addresses

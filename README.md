@@ -89,6 +89,8 @@ disk image. Start Snag once; it sets itself up for your browsers, and its "Conne
 screen shows how to add the extension (Developer mode, "Load unpacked", pick the folder it shows).
 For Firefox, open [snagdl.com/firefox](https://snagdl.com/firefox) in Firefox: the add-on is signed
 by Mozilla and updates itself.
+Snag updates itself too: when a new version is out, it downloads it and offers to restart into
+it.
 
 **From source (Linux):** with the tools in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md),
 

@@ -98,13 +98,20 @@ for the bundled yt-dlp under the hardened runtime.
 ### Snag's feed
 
 Installed Snag reads a small file on Snag's website once a day (`internal/feed`): the latest
-release, which About then offers, with one notification, and the yt-dlp to use. It is signed
-with an Ed25519 key whose public half is built into the app (`feed.PublicKey`), so whoever serves
-it can't change what Snag trusts, and Snag never takes a feed older than one it already has.
+release with the SHA-256 of each of its installers, and the yt-dlp to use. It is signed with an
+Ed25519 key whose public half is built into the app (`feed.PublicKey`), so whoever serves it
+can't change what Snag trusts, and Snag never takes a feed older than one it already has.
+
+Snag downloads the installer for how it was installed and checks it against the feed
+(`internal/update`), then offers "Restart to update" in About and the tray, with one
+notification. Restarting installs it: the Windows installer runs quietly once Snag has quit,
+macOS swaps in the disk image's Snag.app, and Linux installs the package through `pkexec`, which
+asks for the password. The new Snag then starts. Copies Snag can't replace, such as a
+development build, link to the release page instead.
 
 The **Feed** workflow (`.github/workflows/feed.yml`) signs it with `cmd/sign-feed` and puts it
 in a Cloudflare R2 bucket the website serves. Its inputs: the latest Snag (the latest tag if left
-empty, and none before the first release) and the yt-dlp to use. Name a yt-dlp version
+empty, and none before the first release; its release's `SHA256SUMS` names the installers) and the yt-dlp to use. Name a yt-dlp version
 (`2026.10.10`, or `nightly@…`) to hold every Snag at it, older or newer, when yt-dlp's latest
 release broke a site; leave it empty to follow yt-dlp's latest stable release again.
 

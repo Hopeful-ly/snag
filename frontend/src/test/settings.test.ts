@@ -163,11 +163,29 @@ describe("Settings", () => {
 
   it("says when a newer Snag is out, and opens its page", async () => {
     const api = new FakeApi(settled());
-    api.updateValue = { version: "1.2.0" };
+    api.updateValue = { version: "1.2.0", ready: false };
     const { user, sheet } = await openSettings(api);
     await user.click(await within(sheet).findByRole("button", { name: "get it" }));
     expect(api.calls).toContain("openUpdatePage");
     expect(within(sheet).getByText(/is out/)).toHaveTextContent("Snag 1.2.0 is out: get it");
+  });
+
+  it("restarts into a newer Snag once it's downloaded", async () => {
+    const api = new FakeApi(settled());
+    api.updateValue = { version: "1.2.0", ready: true };
+    const { user, sheet } = await openSettings(api);
+    await user.click(await within(sheet).findByRole("button", { name: "restart to update" }));
+    expect(api.calls).toContain("installUpdate");
+    expect(within(sheet).queryByRole("button", { name: "get it" })).toBeNull();
+  });
+
+  it("shows why an update couldn't be installed", async () => {
+    const api = new FakeApi(settled());
+    api.updateValue = { version: "1.2.0", ready: true };
+    api.failing.set("installUpdate", "the update wasn't allowed");
+    const { user, sheet } = await openSettings(api);
+    await user.click(await within(sheet).findByRole("button", { name: "restart to update" }));
+    expect(await screen.findByText("the update wasn't allowed")).toBeInTheDocument();
   });
 
   it("says nothing of updates while this Snag is the latest", async () => {

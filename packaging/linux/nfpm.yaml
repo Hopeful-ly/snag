@@ -12,7 +12,7 @@ maintainer: Snag
 description: |
   Download manager with a one-click Download button on web videos: every quality, proper
   names, fast resumable multi-connection downloads, and a desktop app with tray.
-license: Proprietary
+license: GPL-3.0-or-later
 homepage: https://github.com/Roham1299/snag
 
 contents:

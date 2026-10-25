@@ -941,10 +941,14 @@ export class FakeApi implements Api {
     await this.call("openFirefoxAddon");
   }
 
-  updateValue: { version: string } | null = null;
+  updateValue: { version: string; ready: boolean } | null = null;
 
   async update() {
     return this.updateValue;
+  }
+
+  async installUpdate() {
+    await this.call("installUpdate");
   }
 
   async openUpdatePage() {

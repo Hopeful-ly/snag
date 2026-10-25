@@ -86,7 +86,9 @@ export interface Api {
   author(): Promise<{ name: string; page: string }>;
   openAuthorPage(): Promise<void>;
   openFirefoxAddon(): Promise<void>;
-  update(): Promise<{ version: string } | null>;
+  update(): Promise<{ version: string; ready: boolean } | null>;
+  // Installs the downloaded update and restarts Snag into it.
+  installUpdate(): Promise<void>;
   openUpdatePage(): Promise<void>;
   setup(): Promise<Setup>;
   showExtensionFolder(): Promise<void>;
@@ -203,6 +205,7 @@ export const wailsApi: Api = {
   openAuthorPage: () => SystemService.OpenAuthorPage(),
   openFirefoxAddon: () => SystemService.OpenFirefoxAddon(),
   update: () => SystemService.Update(),
+  installUpdate: () => SystemService.InstallUpdate(),
   openUpdatePage: () => SystemService.OpenUpdatePage(),
   queues: () => QueuesService.List(),
   saveQueue: (q) => QueuesService.Save(q),

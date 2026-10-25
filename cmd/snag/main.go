@@ -20,6 +20,7 @@ import (
 	"github.com/Roham1299/snag/internal/platform"
 	"github.com/Roham1299/snag/internal/service"
 	"github.com/Roham1299/snag/internal/tools"
+	"github.com/Roham1299/snag/internal/update"
 	"github.com/Roham1299/snag/internal/version"
 )
 
@@ -110,7 +111,7 @@ func run(background, atLogin bool) error {
 	}
 	updates, stopUpdates := context.WithCancel(context.Background())
 	defer stopUpdates()
-	go keepUpToDate(updates, checker, updatable, ui)
+	go keepUpToDate(updates, checker, updatable, filepath.Join(filepath.Dir(paths.State), "update"), ui)
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
@@ -129,8 +130,9 @@ func run(background, atLogin bool) error {
 	return ui.Run()
 }
 
-// keepUpToDate updates yt-dlp to the version the feed names and reports newer Snag releases.
-func keepUpToDate(ctx context.Context, checker *feed.Checker, ytdlp string, ui *app.App) {
+// keepUpToDate updates yt-dlp to the version the feed names, and downloads newer Snag releases
+// into dir for the user to restart into.
+func keepUpToDate(ctx context.Context, checker *feed.Checker, ytdlp, dir string, ui *app.App) {
 	wait := firstCheckAfter
 	for {
 		select {
@@ -143,7 +145,20 @@ func keepUpToDate(ctx context.Context, checker *feed.Checker, ytdlp string, ui *
 		tools.UpdateYtDLP(ctx, ytdlp, latest.YtDLP)
 		if version.IsPackaged() {
 			newer := latest.Newer(version.String())
-			ui.SetUpdate(newer, checker.Tell(newer))
+			if newer == nil {
+				_ = os.RemoveAll(dir) // the installer this copy came from
+			}
+			installer := ""
+			if f, ok := update.For(newer); ok {
+				var err error
+				if installer, err = update.Download(ctx, f, dir); err != nil {
+					// Told of once it downloads, so the notification can offer the restart.
+					log.Printf("couldn't download Snag %s: %v", newer.Version, err)
+					ui.SetUpdate(newer, "", false)
+					continue
+				}
+			}
+			ui.SetUpdate(newer, installer, checker.Tell(newer))
 		}
 	}
 }

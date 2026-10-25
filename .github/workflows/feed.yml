@@ -31,6 +31,7 @@ jobs:
 
       - name: Sign the feed
         env:
+          GH_TOKEN: ${{ github.token }}
           SNAG_FEED_KEY: ${{ secrets.SNAG_FEED_KEY }}
           SNAG: ${{ inputs.snag }}
           YTDLP: ${{ inputs.ytdlp }}
@@ -40,6 +41,9 @@ jobs:
           release=()
           if [ -n "$version" ]; then
             release=(-snag "$version" -page "https://github.com/$GITHUB_REPOSITORY/releases/tag/v$version")
+            # The installers' checksums, for Snag to update itself.
+            gh release download "v$version" --pattern SHA256SUMS --dir release
+            release+=(-sums release/SHA256SUMS -download "https://github.com/$GITHUB_REPOSITORY/releases/download/v$version")
           else
             echo "::notice::No release yet: the feed names only the yt-dlp to use."
           fi

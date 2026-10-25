@@ -43,7 +43,43 @@ type Feed struct {
 type Release struct {
 	Version string `json:"version"`
 	Page    string `json:"page"`
+	// Files are the release's installers by kind (see FileKind), for Snag to update itself.
+	Files map[string]File `json:"files,omitempty"`
 }
+
+// File is an installer and its SHA-256, which the feed's signature vouches for.
+type File struct {
+	URL    string `json:"url"`
+	SHA256 string `json:"sha256"`
+}
+
+var fileKinds = []struct {
+	kind string
+	name *regexp.Regexp
+}{
+	{"windows-amd64", regexp.MustCompile(`-windows-amd64-setup\.exe$`)},
+	{"windows-arm64", regexp.MustCompile(`-windows-arm64-setup\.exe$`)},
+	{"macos", regexp.MustCompile(`-macos\.dmg$`)},
+	{"deb-amd64", regexp.MustCompile(`_amd64\.deb$`)},
+	{"deb-arm64", regexp.MustCompile(`_arm64\.deb$`)},
+	{"rpm-amd64", regexp.MustCompile(`\.x86_64\.rpm$`)},
+	{"rpm-arm64", regexp.MustCompile(`\.aarch64\.rpm$`)},
+	{"arch-amd64", regexp.MustCompile(`-x86_64\.pkg\.tar\.zst$`)},
+	{"arch-arm64", regexp.MustCompile(`-aarch64\.pkg\.tar\.zst$`)},
+}
+
+// FileKind names the kind of installer a release file is, from its name: "windows-amd64",
+// "macos", "deb-arm64" and so on, or "" for other files.
+func FileKind(name string) string {
+	for _, k := range fileKinds {
+		if k.name.MatchString(name) {
+			return k.kind
+		}
+	}
+	return ""
+}
+
+var sha256Hex = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 type envelope struct {
 	Feed      string `json:"feed"`
@@ -86,11 +122,21 @@ func Open(data []byte, key ed25519.PublicKey) (Feed, error) {
 		if _, ok := parseVersion(f.Snag.Version); !ok {
 			return Feed{}, fmt.Errorf("the feed's Snag version %q isn't one", f.Snag.Version)
 		}
-		if u, err := url.Parse(f.Snag.Page); err != nil || u.Scheme != "https" || u.Host == "" {
+		if !isHTTPS(f.Snag.Page) {
 			return Feed{}, fmt.Errorf("the feed's release page %q isn't an https address", f.Snag.Page)
+		}
+		for kind, file := range f.Snag.Files {
+			if !isHTTPS(file.URL) || !sha256Hex.MatchString(file.SHA256) {
+				return Feed{}, fmt.Errorf("the feed's %s installer isn't an https address and a SHA-256", kind)
+			}
 		}
 	}
 	return f, nil
+}
+
+func isHTTPS(s string) bool {
+	u, err := url.Parse(s)
+	return err == nil && u.Scheme == "https" && u.Host != ""
 }
 
 // Seal signs a feed with key and returns its envelope.

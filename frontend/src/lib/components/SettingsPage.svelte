@@ -16,7 +16,7 @@
     (a) => (author = a),
     () => {},
   );
-  let update = $state<{ version: string } | null>(null);
+  let update = $state<{ version: string; ready: boolean } | null>(null);
   void snag.api.update().then(
     (u) => (update = u),
     () => {},
@@ -209,7 +209,19 @@
           <span class="logo"><Icon name="download" size={18} stroke={2.4} /></span>
           <div>
             <div class="name">Snag <span class="version numbers">{version}</span></div>
-            {#if update}
+            {#if update?.ready}
+              <div class="credits">
+                Snag <span class="numbers">{update.version}</span> is out:
+                <button
+                  type="button"
+                  class="link"
+                  disabled={busy("update")}
+                  onclick={() =>
+                    snag.request("global:settings:update", () => snag.api.installUpdate())}
+                  >restart to update</button
+                >
+              </div>
+            {:else if update}
               <div class="credits">
                 Snag <span class="numbers">{update.version}</span> is out:
                 <button type="button" class="link" onclick={() => snag.api.openUpdatePage()}

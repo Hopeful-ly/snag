@@ -112,6 +112,13 @@ func (t *tray) build(list []engine.Download, settings config.Config) {
 		}
 	})
 	t.menu.AddSeparator()
+	if r, installer := a.newerRelease(); installer != "" {
+		t.menu.Add("Restart to update to Snag " + r.Version).OnClick(func(*application.Context) {
+			if err := a.installUpdate(); err != nil {
+				a.notify("snag-update", "Snag couldn't update", err.Error())
+			}
+		})
+	}
 	t.menu.Add("Quit Snag").OnClick(func(*application.Context) { a.Quit() })
 }
 
