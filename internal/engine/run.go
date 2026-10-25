@@ -98,6 +98,18 @@ func (e *Engine) start(en *entry) {
 	e.changed(en, true)
 }
 
+// markDownloaded marks a finished file as downloaded from the internet, where this OS does that.
+// It happens before the download is reported done, so the file is never opened unmarked; a file
+// that can't be marked is still done.
+func (e *Engine) markDownloaded(d *Download) {
+	if e.mark == nil || d.Path == "" {
+		return
+	}
+	if err := e.mark(d.Path, d.URL, d.Page); err != nil {
+		e.log.Warn("couldn't mark the file as downloaded", "id", d.ID, "path", d.Path, "err", err)
+	}
+}
+
 // finished records how a run ended and starts whatever can run next.
 func (e *Engine) finished(en *entry, err error, interrupted bool) {
 	e.mu.Lock()
@@ -122,6 +134,7 @@ func (e *Engine) finished(en *entry, err error, interrupted bool) {
 		return // finishRemove takes it from here
 	case err == nil:
 		en.fails = 0
+		e.markDownloaded(d)
 		asFinished := *d // with the cookies, which looking for its checksum may need
 		d.Status, d.Finished, d.Cookies = StatusDone, time.Now(), nil
 		asFinished.Status, asFinished.Finished = d.Status, d.Finished

@@ -122,9 +122,21 @@ type testEngine struct {
 	// otherDrive makes every download folder count as on another drive than the work root.
 	otherDrive   atomic.Bool
 	findChecksum ChecksumFinder
+	// markFails makes marking finished files as downloaded fail, as on a drive that can't.
+	markFails atomic.Bool
 
 	queueMu     sync.Mutex
 	queueEvents []QueueEvent
+	marked      []marked
+}
+
+// marked is one finished file marked as downloaded (Options.Mark).
+type marked struct{ path, source, page string }
+
+func (te *testEngine) marks() []marked {
+	te.queueMu.Lock()
+	defer te.queueMu.Unlock()
+	return slices.Clone(te.marked)
 }
 
 func (te *testEngine) queueHeard() []QueueEvent {
@@ -179,6 +191,15 @@ func (te *testEngine) start(t *testing.T) {
 		Logger:       slog.New(slog.DiscardHandler),
 		SameDrive:    func(string, string) bool { return !te.otherDrive.Load() },
 		FindChecksum: te.findChecksum,
+		Mark: func(path, source, page string) error {
+			if te.markFails.Load() {
+				return errors.New("no such attribute")
+			}
+			te.queueMu.Lock()
+			defer te.queueMu.Unlock()
+			te.marked = append(te.marked, marked{path, source, page})
+			return nil
+		},
 		OnQueue: func(ev QueueEvent) {
 			te.queueMu.Lock()
 			defer te.queueMu.Unlock()

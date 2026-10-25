@@ -31,6 +31,10 @@ to choose from, and a clean, modern interface.
 - Watch while it downloads: open the file from your downloads folder and play what has arrived.
 - Downloads from your browser (archives, programs, videos, documents, anything large) are handed
   to Snag automatically; if Snag can't take one, the browser gets it back.
+- Finished files are marked as downloaded from the internet, the way browsers mark theirs, so
+  Windows (SmartScreen, Office's Protected View) and macOS (Gatekeeper) check a program or
+  document from Snag before it first opens, just as one from the browser. The mark keeps the
+  file's address and page in the file's own metadata, on your computer only.
 - Many links at once: right-click a page for "Download all links with Snag…" (or select part of
   it first), paste several links, or import a file of them. Snag groups them (archives,
   programs, videos, documents…), learns their real names and sizes, and downloads the ones you

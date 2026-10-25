@@ -45,7 +45,7 @@ internal/naming/     file names: safe names, the server's name, real names vs to
 internal/config/     settings with defaults and limits
 internal/store/      JSON files written atomically, readable only by the user
 internal/platform/   what differs per OS: where files live, stopping a program and its children,
-                     starting at login
+                     starting at login, marking a finished file as downloaded
 internal/watchlink/  a download's final name showing its growing file (hard link, else symlink)
 internal/version/    the build's version
 frontend/            the web UI (Svelte + TypeScript + Vite), embedded into the binary
@@ -189,3 +189,11 @@ page (above).
   test there downloads across drives for real.
 - A file the user chose to replace is set aside (a hidden name in its folder) when the download
   starts, deleted when it finishes, and put back if it is removed.
+- A finished file is marked as downloaded from the internet (`platform.MarkDownloaded`, through
+  the engine's `Options.Mark`) before the download is reported done, so nothing offers to open it
+  unmarked. Windows gets the Mark of the Web, a `Zone.Identifier` stream with the zone (3, the
+  internet), the page and the address, which SmartScreen and Office's Protected View act on;
+  macOS the quarantine attribute Gatekeeper acts on; Linux the freedesktop origin attributes file
+  managers show (Linux has no check on downloaded programs). A drive whose file system can't
+  hold the mark (FAT, exFAT) is skipped quietly; any other failure is logged, and the download is
+  still done.

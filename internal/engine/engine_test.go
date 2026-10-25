@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -25,6 +26,24 @@ func TestAddRunsAndFinishes(t *testing.T) {
 	if d.Path != filepath.Join(te.dir, "a.bin") || d.Done != 100 || d.Finished.IsZero() || d.Cookies != nil {
 		t.Errorf("finished download = %+v", d)
 	}
+}
+
+func TestFinishedFilesAreMarkedAsDownloaded(t *testing.T) {
+	te := newTestEngine(t, Settings{})
+	d := te.add(t, AddRequest{URL: "https://example.com/files/a.bin", Page: "https://example.com/files/"})
+	te.waitFor(t, d.ID, StatusDownloading)
+	te.runner.finish(d.URL, nil)
+	d = te.waitFor(t, d.ID, StatusDone)
+	if want := []marked{{d.Path, d.URL, d.Page}}; !slices.Equal(te.marks(), want) {
+		t.Errorf("marked %+v, want %+v", te.marks(), want)
+	}
+
+	// A drive that can't hold the mark doesn't make the download fail.
+	te.markFails.Store(true)
+	d = te.add(t, AddRequest{URL: "https://example.com/files/b.bin"})
+	te.waitFor(t, d.ID, StatusDownloading)
+	te.runner.finish(d.URL, nil)
+	te.waitFor(t, d.ID, StatusDone)
 }
 
 func TestMetaReachesTheRunner(t *testing.T) {

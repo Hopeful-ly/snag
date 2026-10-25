@@ -118,6 +118,7 @@ func Start(opts Options) (*Service, error) {
 		Logger:    s.log,
 		SameDrive: platform.SameDrive,
 		Hide:      platform.Hide,
+		Mark:      platform.MarkDownloaded,
 		OnQueue:   s.queueEvent,
 
 		FindChecksum: newChecksumFinder().Find,

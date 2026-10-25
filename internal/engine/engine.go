@@ -55,6 +55,9 @@ type Options struct {
 	SameDrive func(a, b string) bool
 	// Hide hides the parts folder kept on another drive from the file manager.
 	Hide func(path string) error
+	// Mark marks a finished file as downloaded from the internet, from source (its address) and
+	// page, as browsers do; nil marks nothing.
+	Mark func(path, source, page string) error
 	// OnQueue receives queue events one at a time; may be nil.
 	OnQueue func(QueueEvent)
 	// FindChecksum looks online for a finished file's checksum; nil looks nowhere.
@@ -68,6 +71,7 @@ type Engine struct {
 	workRoot  string
 	sameDrive func(a, b string) bool
 	hide      func(path string) error
+	mark      func(path, source, page string) error
 	log       *slog.Logger
 
 	findChecksum ChecksumFinder
@@ -115,6 +119,7 @@ func New(opts Options) *Engine {
 		workRoot:     opts.WorkRoot,
 		sameDrive:    opts.SameDrive,
 		hide:         opts.Hide,
+		mark:         opts.Mark,
 		findChecksum: opts.FindChecksum,
 		log:          opts.Logger,
 		settings:     opts.Settings,
