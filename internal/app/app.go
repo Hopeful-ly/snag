@@ -31,7 +31,9 @@ var errNotReady = errors.New("snag is still starting")
 
 // App is the running desktop application.
 type App struct {
-	wails     *application.App
+	wails *application.App
+	// window is made the first time it's shown, so a start at login doesn't load a web view.
+	windowMu  sync.Mutex
 	window    *application.WebviewWindow
 	tray      *tray
 	saves     *saveWindows
@@ -41,8 +43,10 @@ type App struct {
 
 	mu  sync.Mutex
 	svc *service.Service
-	// update is a newer release; nil when this one is the latest.
-	update *feed.Release
+	// update is a newer release; nil when this one is the latest. installer is its downloaded
+	// installer, or "".
+	update    *feed.Release
+	installer string
 }
 
 // Options configure New.
@@ -66,6 +70,11 @@ func New(assets fs.FS, opts Options) *App {
 		Linux: application.LinuxOptions{
 			ApplicationID: uniqueID,
 			ProgramName:   uniqueID,
+			// Snag keeps running in the tray, with or without a window.
+			DisableQuitOnLastWindowClosed: true,
+		},
+		Windows: application.WindowsOptions{
+			DisableQuitOnLastWindowClosed: true,
 		},
 		Services: []application.Service{
 			application.NewService(&SystemService{app: a}),
@@ -89,12 +98,13 @@ func New(assets fs.FS, opts Options) *App {
 				}
 			},
 		},
-		// Snag keeps running in the tray when its window is closed.
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: false,
 		},
 	})
-	a.window = newMainWindow(a.wails, !opts.Background)
+	if !opts.Background {
+		a.window = newMainWindow(a.wails)
+	}
 	a.tray = newTray(a)
 	a.setUpNotifications()
 	return a
@@ -150,9 +160,15 @@ const mapDelay = 150 * time.Millisecond
 
 // show focuses the window even on another workspace, which the desktop switches to.
 func (a *App) show() {
-	a.window.Show()
-	a.window.Restore()
-	a.window.Focus()
+	a.windowMu.Lock()
+	if a.window == nil {
+		a.window = newMainWindow(a.wails)
+	}
+	window := a.window
+	a.windowMu.Unlock()
+	window.Show()
+	window.Restore()
+	window.Focus()
 	platform.BringForward(os.Getpid(), name)
 	time.AfterFunc(mapDelay, func() { platform.BringForward(os.Getpid(), name) })
 }
